@@ -70,7 +70,7 @@ configure in the usart 2 as asynchronous mode and set the baud rate as 115200 as
 
 
 ## STM 32 CUBE PROGRAM :
-
+```
 Name: GOKUL S
 Ref.no: 212222110011
 
@@ -236,7 +236,7 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {}
 #endif
-
+```
 
 ## Output screen shots of Serial port utility   :
  
