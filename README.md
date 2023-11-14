@@ -75,25 +75,25 @@ Name: GOKUL S
 Ref.no: 212222110011
 
 #include "main.h"
-#include "stdio.h"
-#include "stdbool.h"
 #include "Soil Moisture Sensor.h"
-long int adc_val;
-ADC_HandleTypeDef hadc;
+#include "stdio.h"
 UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_ADC_Init(void);
 static void MX_USART2_UART_Init(void);
-#if defined(__ICCARM__) || defined (__ARMCC__VERSION)
-#define PUTCHAR_PROTOYPE int fputc(int ch,FILE *f)
+void ADC_Init(void);
+void GPIO_Init(void);
+#if defined (__ICCARM__) || defined (__ARMCC_VERSION)
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #elif defined(__GNUC__)
-#define PUTCHAR_PROTOTYPE int __io__putchar(int ch)
-#endif
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#endif /* __ICCARM__ || __ARMCC_VERSION */
+
 PUTCHAR_PROTOTYPE
 {
-	HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
-	return ch;
+  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
+
+  return ch;
 }
 
 int main(void)
@@ -102,21 +102,14 @@ int main(void)
   HAL_Init();
   SystemClock_Config();
   MX_GPIO_Init();
-  MX_ADC_Init();
   MX_USART2_UART_Init();
- 
+  ADC_Init();
+  GPIO_Init();
   while (1)
   {
-    HAL_ADC_Start(&hadc);
-    HAL_ADC_PollForConversion(&hadc,100);
-    adc_val=HAL_ADC_GetValue(&hadc);
-    HAL_ADC_Stop(&hadc);
-    HAL_Delay(500);
-    printf("ADC RAW VALUE = %ld\n",adc_val);
-    HAL_Delay(500);
-
+	  soil_moisture();
   }
-  
+ 
 }
 
 void SystemClock_Config(void)
@@ -125,7 +118,7 @@ void SystemClock_Config(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
-
+ 
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
@@ -135,8 +128,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-
-  
+ 
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK3|RCC_CLOCKTYPE_HCLK
                               |RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1
                               |RCC_CLOCKTYPE_PCLK2;
@@ -152,39 +144,10 @@ void SystemClock_Config(void)
   }
 }
 
-static void MX_ADC_Init(void)
-{
-  hadc.Instance = ADC;
-  hadc.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV1;
-  hadc.Init.Resolution = ADC_RESOLUTION_10B;
-  hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc.Init.ScanConvMode = ADC_SCAN_DISABLE;
-  hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-  hadc.Init.LowPowerAutoWait = DISABLE;
-  hadc.Init.LowPowerAutoPowerOff = DISABLE;
-  hadc.Init.ContinuousConvMode = ENABLE;
-  hadc.Init.NbrOfConversion = 1;
-  hadc.Init.DiscontinuousConvMode = DISABLE;
-  hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc.Init.DMAContinuousRequests = DISABLE;
-  hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
-  hadc.Init.SamplingTimeCommon1 = ADC_SAMPLETIME_1CYCLE_5;
-  hadc.Init.SamplingTimeCommon2 = ADC_SAMPLETIME_1CYCLE_5;
-  hadc.Init.OversamplingMode = DISABLE;
-  hadc.Init.TriggerFrequencyMode = ADC_TRIGGER_FREQ_HIGH;
-  if (HAL_ADC_Init(&hadc) != HAL_OK)
-  {
-    Error_Handler();
-  }
- 
-}
-
 static void MX_USART2_UART_Init(void)
 {
-
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -212,19 +175,14 @@ static void MX_USART2_UART_Init(void)
   }
 
 }
-]
+
 static void MX_GPIO_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  __HAL_RCC_GPIOB_CLK_ENABLE();
+
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
 }
+
 void Error_Handler(void)
 {
   __disable_irq();
@@ -232,17 +190,20 @@ void Error_Handler(void)
   {
   }
 }
+
 #ifdef  USE_FULL_ASSERT
+
 void assert_failed(uint8_t *file, uint32_t line)
-{}
+{
+  
+}
 #endif
 ```
 
 ## Output screen shots of Serial port utility   :
  
- ![WhatsApp Image 2023-11-04 at 15 40 27_92facfba](https://github.com/gokul-sureshkumar/-EXPERIMENT--03-INTERFACING-A-SOIL-MOISTURE-SENSOR-AND-CONFIGURING-THE-OUTPUT-THROUGH-USART--USING-/assets/121148715/b3374c08-72e2-49ad-bc22-472b5f05d8c0)
+![image](https://github.com/gokul-sureshkumar/-EXPERIMENT--03-INTERFACING-A-SOIL-MOISTURE-SENSOR-AND-CONFIGURING-THE-OUTPUT-THROUGH-USART--USING-/assets/121148715/c04dcdf8-5d8c-4f06-8d7d-d02dca4f18c9)
 
-![WhatsApp Image 2023-11-04 at 15 40 26_a5dcfdc9](https://github.com/gokul-sureshkumar/-EXPERIMENT--03-INTERFACING-A-SOIL-MOISTURE-SENSOR-AND-CONFIGURING-THE-OUTPUT-THROUGH-USART--USING-/assets/121148715/47571384-3ae4-4c5e-bfc6-04673204b401)
 
  
  
